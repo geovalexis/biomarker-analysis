@@ -12,6 +12,9 @@ Geovanny Risco
   - <a href="#13-classical-roc-curve-analysis"
     id="toc-13-classical-roc-curve-analysis">1.3 Classical ROC Curve
     Analysis</a>
+  - <a href="#14-multivariate-roc-curve-explorer"
+    id="toc-14-multivariate-roc-curve-explorer">1.4 Multivariate ROC Curve
+    Explorer</a>
 
 # 1 Biomarker Analysis with MetaboAnalystR
 
@@ -166,6 +169,94 @@ Creatine_box_1dpi72.png
 <p class="caption">
 
 Creatine_1dpi300.png
+
+</p>
+
+</div>
+
+## 1.4 Multivariate ROC Curve Explorer
+
+``` r
+# Set the biomarker analysis mode to perform Multivariate exploratory ROC curve analysis ("explore")
+mSet<-SetAnalysisMode(mSet, "explore")
+
+# Prepare data for biomarker analysis
+mSet<-PrepareROCData(mSet)
+
+# Perform multivariate ROC curve analysis, using SVM classification and ranking
+mSet<-PerformCV.explore(mSet, cls.method = "svm", rank.method = "svm", lvNum = 2)
+
+### OPTION 1 Comparison plot of ROC curves of all models ###
+mSet<-PlotROC(mSet, imgName = "ROC_all_models", format = "png", dpi = 300, mdl.inx= 0, avg.method = "threshold", show.conf = 0, show.holdout = 0, focus="fpr", cutoff=0.5)
+
+# Plot predicted class probabilities for each sample for a selected model, not showing labels of wrongly classified samples
+mSet<-PlotProbView(mSet, imgName = "multi_roc_prob", format = "png", dpi = 300, mdl.inx = -1, show = 0, showPred = 0)
+```
+
+    ## [1] "1773 duplicates are merged to their average"
+
+``` r
+# Plot the predictive accuracy of models with increasing number of features
+mSet<-PlotAccuracy(mSet, imgName = "multi_roc_accuracy", format = "png", dpi = 300)
+
+# Plot the most important features of a selected model ranked from most to least important
+mSet<-PlotImpVars(mSet, imgName = "multi_roc_impvar", format="png", dpi=300, mdl.inx = -1, measure="freq", feat.num=15)
+```
+
+The results of executing the above code are the following:
+
+- `ROC_all_modelsdpi300.png`: ROC curve plot
+- `multi_roc_probdpi300.png`: Probabilities plot
+- `multi_roc_accuracydpi300.png`: Predictive accuracies plot
+- `multi_roc_impvardpi300.png`: ranking of important features plot
+- `roc_pred_prob.csv`: numeric data for ROC curve
+- `imp_features_cv.csv`: feature importance numeric data
+
+Here we can see the resulting images:
+
+<div class="figure" style="text-align: center">
+
+<img src="ROC_all_modelsdpi300.png" alt="ROC_all_modelsdpi300.png" width="2400" />
+
+<p class="caption">
+
+ROC_all_modelsdpi300.png
+
+</p>
+
+</div>
+
+<div class="figure" style="text-align: center">
+
+<img src="multi_roc_probdpi300.png" alt="multi_roc_probdpi300.png" width="2700" />
+
+<p class="caption">
+
+multi_roc_probdpi300.png
+
+</p>
+
+</div>
+
+<div class="figure" style="text-align: center">
+
+<img src="multi_roc_accuracydpi300.png" alt="multi_roc_accuracydpi300.png" width="2700" />
+
+<p class="caption">
+
+multi_roc_accuracydpi300.png
+
+</p>
+
+</div>
+
+<div class="figure" style="text-align: center">
+
+<img src="multi_roc_impvardpi300.png" alt="multi_roc_impvardpi300.png" width="2400" />
+
+<p class="caption">
+
+multi_roc_impvardpi300.png
 
 </p>
 
