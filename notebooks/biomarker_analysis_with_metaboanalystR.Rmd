@@ -2,7 +2,12 @@
 title: "BiomarkerAnalysis"
 author: "Geovanny Risco"
 date: '2023-02-13'
-output: html_document
+output:
+  github_document:
+    keep_html: yes
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
 ---
 
 ```{r setup, include=FALSE}
@@ -11,9 +16,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Biomarker Analysis with MetaboAnalystR
 
-# Installation
+## Installation
 
-```{r}
+```{r, eval=FALSE}
 # Install dependencies
 metanr_packages <- function(){
 
@@ -41,7 +46,9 @@ metanr_packages()
 install.packages("devtools")
 library(devtools)
 devtools::install_github("xia-lab/MetaboAnalystR", build = TRUE, build_vignettes = FALSE)
+```
 
+```{r}
 # Import library
 library(MetaboAnalystR)
 ```
@@ -53,7 +60,7 @@ library(MetaboAnalystR)
 # Create objects for storing processed data from biomarker analysis
 mSet<-InitDataObjects("conc", "roc", FALSE)
 # Read in data and fill in the dataSet list
-mSet<-Read.TextData(mSet, "https://www.xialab.ca/api/download/metaboanalyst/nmr_bins.csv")
+mSet<-Read.TextData(mSet, "https://www.xialab.ca/api/download/metaboanalyst/human_cachexia.csv")
 # Sanity check, replace missing values, check if the sample size is too small
 mSet<-SanityCheckData(mSet)
 mSet<-ReplaceMin(mSet)
@@ -61,7 +68,7 @@ mSet<-IsSmallSmplSize(mSet)
 mSet<-PreparePrenormData(mSet)
 ```
 
-```{r}
+```{r, results='hide'}
 ###### *** OPTION 2 FOR NORMALIZATION
 # No normalization, and computeS metabolite ratios and includeS the top 20 
 mSet<-Normalization(mSet, "NULL", "NULL", "NULL", "C01", ratio=TRUE, ratioNum=20)
@@ -83,12 +90,29 @@ mSet<-SetAnalysisMode(mSet, "univ")
 mSet<-PrepareROCData(mSet)
 
 ### OPTION 1 Perform univariate ROC curve analysis ###
-mSet<-Perform.UnivROC(mSet, feat.nm = "Isoleucine", imgName = "Isoleucine", format="png", dpi=300, isAUC=F, isOpt=T, optMethod="closest.topleft", isPartial=F, measure="sp", cutoff=0.2)
+mSet<-Perform.UnivROC(mSet, feat.nm = "Creatine", version = "1", format="png", dpi=300, isAUC=F, isOpt=T, optMethod="closest.topleft", isPartial=F, measure="sp", cutoff=0.2)
 
 # Create box plot showing the concentrations of the selected compound between the groups
-mSet<-PlotBoxPlot(mSet, "Isoleucine", "Isoleucineboxplot_0_", "png", 72, T, FALSE)
+mSet<-PlotRocUnivBoxPlot(mSet, "Creatine", version= "1", "png", 72, T, FALSE)
 # Perform calculation of feature importance (AUC, p value, fold change)
 mSet<-CalculateFeatureRanking(mSet)
+```
+
+The results of executing the above code are the following:
+
+* `metaboanalyst_roc_univ.csv` (numeric results for AUC, p-value, FC and clusters)
+* `Creatine_box_1dpi72.png` (Boxplot for both groups)
+* `Creatine_1dpi300.png` (ROC curve)
+
+Here we can see the resulting images:
+
+```{r, echo=FALSE, fig.cap="Creatine_box_1dpi72.png", fig.align="center"}
+knitr::include_graphics("Creatine_box_1dpi72.png")
+```
+
+
+```{r, echo=FALSE, fig.cap="Creatine_1dpi300.png", fig.align="center"}
+knitr::include_graphics("Creatine_1dpi300.png")
 ```
 
 
