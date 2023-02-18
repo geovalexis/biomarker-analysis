@@ -15,6 +15,11 @@ Geovanny Risco
   - <a href="#14-multivariate-roc-curve-explorer"
     id="toc-14-multivariate-roc-curve-explorer">1.4 Multivariate ROC Curve
     Explorer</a>
+  - <a href="#15-roc-curve-based-model-creation-and-evaluation"
+    id="toc-15-roc-curve-based-model-creation-and-evaluation">1.5 ROC Curve
+    Based Model Creation and Evaluation</a>
+  - <a href="#16-sweave-report" id="toc-16-sweave-report">1.6 Sweave
+    Report</a>
 
 # 1 Biomarker Analysis with MetaboAnalystR
 
@@ -261,3 +266,104 @@ multi_roc_impvardpi300.png
 </p>
 
 </div>
+
+## 1.5 ROC Curve Based Model Creation and Evaluation
+
+``` r
+# Set the biomarker analysis mode to perform ROC Curve Based Model Creation and Evaluation ("test")
+mSet<-SetAnalysisMode(mSet, "test")
+
+# Prepare data for biomarker analysis
+mSet<-PrepareROCData(mSet)
+
+# Perform calculation of feature importance (AUC, p value, fold change)
+mSet<-CalculateFeatureRanking(mSet)
+
+# Manually select a subset of features for ROC analysis to build a classifier 
+selected.cmpds <- c("Betaine", "N,N-Dimethylglycine", "Quinolinate", "Glucose")
+
+# Manually select a subset of samples for ROC analysis hold-out data for validation purposes
+selected.smpls <- c("PIF_178", "PIF_087", "PIF_090", "PIF_102", "PIF_111", "PIF_112")
+
+# Prepare the custom data for model creation and sample hold-out 
+mSet<-SetCustomData(mSet, selected.cmpds, selected.smpls)
+
+# Perform ROC curve analysis, using SVM classification 
+mSet<-PerformCV.test(mSet, method = "svm", lvNum = 2)
+
+# Plot the ROC curve for the created model
+mSet<-PlotROC(mSet, imgName = "cls_roc_0_", format="png",  dpi=300, mdl.inx = 0, avg.method = "threshold", 0, 0, "fpr", 0.5)
+
+# Plot the predicted class probabilities for each sample using the user-created classifier, not showing labels of wrongly classified samples
+mSet<-PlotProbView(mSet, imgName = "cls_prob_0_", format="png",  dpi=300, mdl.inx =-1, show=0, showPred= 0)
+```
+
+    ## [1] "3429 duplicates are merged to their average"
+
+    ## Warning in write.table(test.df, file = "roc_pred_prob1.csv", sep = ",", :
+    ## appending column names to file
+
+``` r
+# Plot the predictive accuracy of the model with increasing number of features
+mSet<-PlotTestAccuracy(mSet, imgName = "cls_accu_0_", format="png",  dpi=300)
+
+# Perform permutations tests using the area under the ROC curve as a measure of performance
+mSet<-Perform.Permut(mSet, perf.measure = "auroc", perm.num = 500, propTraining = 2/3)
+
+# Plot the results of the permutation tests
+mSet<-Plot.Permutation(mSet, imgName = "roc_perm_1_", format="png",  dpi=300)
+
+# View predicted classes of new samples (only applicable if samples with empty class labels were in the uploaded dataset)
+mSet <- ROCPredSamplesTable(mSet) # Create table
+```
+
+The results files of the above are the following:
+
+- `cls_roc_0_dpi300.png`: ROC curve for the selected model
+
+<img src="cls_roc_0_dpi300.png" width="2400" style="display: block; margin: auto;" />
+
+- `cls_prob_0_dpi300.png`: scatter plot of predicted class probabilities
+
+<img src="cls_roc_0_dpi300.png" width="2400" style="display: block; margin: auto;" />
+
+- `cls_accu_0_dpi300.png`: Box plot of the predictive accuracy
+
+<img src="cls_prob_0_dpi300.png" width="2700" style="display: block; margin: auto;" />
+
+- `roc_perm_1_dpi300.png`: Plot of the permutations tests using the area
+  under the ROC curve or the predictive accuracy
+
+<img src="roc_perm_1_dpi300.png" width="2400" style="display: block; margin: auto;" />
+
+To view the example of the results:
+
+``` r
+# View the the predictive accuracy results of the model
+GetAccuracyInfo(mSet)
+```
+
+    ## [1] "The average accuracy based on 100 cross validations is 0.705. The accuracy for hold out data prediction is 0.667(4/6)."
+
+## 1.6 Sweave Report
+
+``` r
+PreparePDFReport(mSet, "Human Cachexia")
+```
+
+    ## Writing to file Analysis_Report.tex
+    ## Processing code chunks with options ...
+    ##  1 : keep.source term verbatim (Analysis_Report.Rnw:6)
+    ##  2 : keep.source term tex (Analysis_Report.Rnw:104)
+    ##  3 : keep.source term tex (Analysis_Report.Rnw:209)
+    ##  4 : keep.source term verbatim (Analysis_Report.Rnw:214)
+    ## [1] "R version 4.1.1 (2021-08-10)"
+    ## 
+    ## You can now run (pdf)latex on 'Analysis_Report.tex'
+
+    ## Warning in system(paste(shQuote(texi2dvi), "--version"),
+    ## intern = TRUE): running command
+    ## '"C:\Users\geova\AppData\Local\Programs\MiKTeX\miktex\bin\x64\texify.exe"
+    ## --version' had status 5
+
+    ## [1] 1
