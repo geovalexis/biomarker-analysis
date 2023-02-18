@@ -3,8 +3,7 @@ title: "BiomarkerAnalysis"
 author: "Geovanny Risco"
 date: '2023-02-13'
 output:
-  github_document:
-    keep_html: yes
+  html_document:
     number_sections: yes
     toc: yes
     toc_depth: 3
@@ -93,18 +92,17 @@ mSet<-CalculateFeatureRanking(mSet)
 
 The results of executing the above code are the following:
 
-* `metaboanalyst_roc_univ.csv` (numeric results for AUC, p-value, FC and clusters)
-* `Quinolinate_box_1dpi72.png` (Boxplot for both groups)
-* `Quinolinate_1dpi300.png` (ROC curve)
+* `metaboanalyst_roc_univ.csv`: numeric results for AUC, p-value, FC and clusters
 
-Here we can see the resulting images:
+* `Quinolinate_box_1dpi72.png`: Boxplot for both groups
 
-```{r, echo=FALSE, fig.cap="Quinolinate_box_1dpi72.png", fig.align="center"}
+```{r, echo=FALSE, fig.align="center"}
 knitr::include_graphics("Quinolinate_box_1dpi72.png")
 ```
 
+* `Quinolinate_1dpi300.png`: ROC curve
 
-```{r, echo=FALSE, fig.cap="Quinolinate_1dpi300.png", fig.align="center"}
+```{r, echo=FALSE, fig.align="center"}
 knitr::include_graphics("Quinolinate_1dpi300.png")
 ```
 
@@ -135,28 +133,28 @@ mSet<-PlotImpVars(mSet, imgName = "multi_roc_impvar", format="png", dpi=300, mdl
 
 The results of executing the above code are the following:
 
-* `ROC_all_modelsdpi300.png`: ROC curve plot
-* `multi_roc_probdpi300.png`: Probabilities plot
-* `multi_roc_accuracydpi300.png`: Predictive accuracies plot
-* `multi_roc_impvardpi300.png`: ranking of important features plot
 * `roc_pred_prob.csv`: numeric data for ROC curve
 * `imp_features_cv.csv`: feature importance numeric data
+* `ROC_all_modelsdpi300.png`: ROC curve plot
 
-Here we can see the resulting images:
-
-```{r, echo=FALSE, fig.cap="ROC_all_modelsdpi300.png", fig.align="center"}
+```{r, echo=FALSE, fig.align="center"}
 knitr::include_graphics("ROC_all_modelsdpi300.png")
 ```
 
-```{r, echo=FALSE, fig.cap="multi_roc_probdpi300.png", fig.align="center"}
+* `multi_roc_probdpi300.png`: Probabilities plot
+
+```{r, echo=FALSE, fig.align="center"}
 knitr::include_graphics("multi_roc_probdpi300.png")
 ```
 
-```{r, echo=FALSE, fig.cap="multi_roc_accuracydpi300.png", fig.align="center"}
+* `multi_roc_accuracydpi300.png`: Predictive accuracies plot
+
+```{r, echo=FALSE, fig.align="center"}
 knitr::include_graphics("multi_roc_accuracydpi300.png")
 ```
+* `multi_roc_impvardpi300.png`: ranking of important features plot
 
-```{r, echo=FALSE, fig.cap="multi_roc_impvardpi300.png", fig.align="center"}
+```{r, echo=FALSE, fig.align="center"}
 knitr::include_graphics("multi_roc_impvardpi300.png")
 ```
 

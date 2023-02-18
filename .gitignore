@@ -40,5 +40,5 @@ vignettes/*.pdf
 
 # Custom
 **.qs
-**.html
 **.csv
+**.png
