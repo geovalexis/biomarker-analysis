@@ -111,16 +111,9 @@ mSet<-PreparePrenormData(mSet)
 ```
 
 ``` r
-###### *** OPTION 2 FOR NORMALIZATION
-# No normalization, and computeS metabolite ratios and includeS the top 20 
-mSet<-Normalization(mSet, "NULL", "NULL", "NULL", "C01", ratio=TRUE, ratioNum=20)
-
-# If ratio = TRUE: view the normalized dataset including the top ranked ratios
-# The ratios will be towards the end of the matrix 
-mSet$dataSet$norm
-
-#If ratio = TRUE: view just the top ranked included ratios
-mSet$dataSet$ratio
+###### *** OPTION 1 FOR NORMALIZATION
+# Perform no normalization, no ratio calculation
+mSet<-Normalization(mSet, "NULL", "NULL", "AutoNorm", ratio=FALSE, ratioNum=20)
 ```
 
 ## 1.3 Classical ROC Curve Analysis
@@ -132,7 +125,7 @@ mSet<-SetAnalysisMode(mSet, "univ")
 mSet<-PrepareROCData(mSet)
 
 ### OPTION 1 Perform univariate ROC curve analysis ###
-mSet<-Perform.UnivROC(mSet, feat.nm = "Creatine", version = "1", format="png", dpi=300, isAUC=F, isOpt=T, optMethod="closest.topleft", isPartial=F, measure="sp", cutoff=0.2)
+mSet<-Perform.UnivROC(mSet, feat.nm = "Quinolinate", version = "1", format="png", dpi=300, isAUC=F, isOpt=T, optMethod="closest.topleft", isPartial=F, measure="sp", cutoff=0.2)
 ```
 
     ## Setting levels: control = cachexic, case = control
@@ -141,7 +134,7 @@ mSet<-Perform.UnivROC(mSet, feat.nm = "Creatine", version = "1", format="png", d
 
 ``` r
 # Create box plot showing the concentrations of the selected compound between the groups
-mSet<-PlotRocUnivBoxPlot(mSet, "Creatine", version= "1", "png", 72, T, FALSE)
+mSet<-PlotRocUnivBoxPlot(mSet, "Quinolinate", version= "1", "png", 72, T, FALSE)
 # Perform calculation of feature importance (AUC, p value, fold change)
 mSet<-CalculateFeatureRanking(mSet)
 ```
@@ -150,18 +143,18 @@ The results of executing the above code are the following:
 
 - `metaboanalyst_roc_univ.csv` (numeric results for AUC, p-value, FC and
   clusters)
-- `Creatine_box_1dpi72.png` (Boxplot for both groups)
-- `Creatine_1dpi300.png` (ROC curve)
+- `Quinolinate_box_1dpi72.png` (Boxplot for both groups)
+- `Quinolinate_1dpi300.png` (ROC curve)
 
 Here we can see the resulting images:
 
 <div class="figure" style="text-align: center">
 
-<img src="Creatine_box_1dpi72.png" alt="Creatine_box_1dpi72.png" width="200" />
+<img src="Quinolinate_box_1dpi72.png" alt="Quinolinate_box_1dpi72.png" width="200" />
 
 <p class="caption">
 
-Creatine_box_1dpi72.png
+Quinolinate_box_1dpi72.png
 
 </p>
 
@@ -169,11 +162,11 @@ Creatine_box_1dpi72.png
 
 <div class="figure" style="text-align: center">
 
-<img src="Creatine_1dpi300.png" alt="Creatine_1dpi300.png" width="1800" />
+<img src="Quinolinate_1dpi300.png" alt="Quinolinate_1dpi300.png" width="1800" />
 
 <p class="caption">
 
-Creatine_1dpi300.png
+Quinolinate_1dpi300.png
 
 </p>
 
@@ -189,7 +182,7 @@ mSet<-SetAnalysisMode(mSet, "explore")
 mSet<-PrepareROCData(mSet)
 
 # Perform multivariate ROC curve analysis, using SVM classification and ranking
-mSet<-PerformCV.explore(mSet, cls.method = "svm", rank.method = "svm", lvNum = 2)
+mSet<-PerformCV.explore(mSet, cls.method = "rf", rank.method = "rf", 2)
 
 ### OPTION 1 Comparison plot of ROC curves of all models ###
 mSet<-PlotROC(mSet, imgName = "ROC_all_models", format = "png", dpi = 300, mdl.inx= 0, avg.method = "threshold", show.conf = 0, show.holdout = 0, focus="fpr", cutoff=0.5)
@@ -325,11 +318,11 @@ The results files of the above are the following:
 
 - `cls_prob_0_dpi300.png`: scatter plot of predicted class probabilities
 
-<img src="cls_roc_0_dpi300.png" width="2400" style="display: block; margin: auto;" />
+<img src="cls_prob_0_dpi300.png" width="2700" style="display: block; margin: auto;" />
 
 - `cls_accu_0_dpi300.png`: Box plot of the predictive accuracy
 
-<img src="cls_prob_0_dpi300.png" width="2700" style="display: block; margin: auto;" />
+<img src="cls_accu_0_dpi300.png" width="2700" style="display: block; margin: auto;" />
 
 - `roc_perm_1_dpi300.png`: Plot of the permutations tests using the area
   under the ROC curve or the predictive accuracy
@@ -343,7 +336,7 @@ To view the example of the results:
 GetAccuracyInfo(mSet)
 ```
 
-    ## [1] "The average accuracy based on 100 cross validations is 0.705. The accuracy for hold out data prediction is 0.667(4/6)."
+    ## [1] "The average accuracy based on 100 cross validations is 0.693. The accuracy for hold out data prediction is 0.667(4/6)."
 
 ## 1.6 Sweave Report
 
