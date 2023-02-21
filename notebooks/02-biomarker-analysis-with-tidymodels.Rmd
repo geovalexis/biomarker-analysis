@@ -1,0 +1,90 @@
+---
+title: "Biomarker Analysis with Tidymodels"
+author: "Geovanny Risco"
+date: '2023-02-13'
+output:
+  html_document:
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+    df_print: paged
+    theme: cosmo
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Biomarker Analysis with Tidymodels
+
+## Import libraries
+
+```{r, warning=FALSE}
+library(tidyverse)
+library(tidymodels)
+library(vip)
+```
+
+## Read and prepare data
+
+
+```{r}
+# Read CSV from URL
+cachexia_data <- read_csv("https://www.xialab.ca/api/download/metaboanalyst/human_cachexia.csv")
+head(cachexia_data)
+```
+
+```{r}
+# Small cleaning of data
+cachexia_data <- cachexia_data %>% 
+                 select(-`Patient ID`) %>% 
+                 mutate(`Muscle loss`= factor(`Muscle loss`))
+
+# Set up recipe
+rec <- recipe(`Muscle loss` ~ ., data = cachexia_data) %>%
+  step_center(all_predictors()) %>%
+  step_scale(all_predictors())
+
+# Set up random forest model using parsnip
+rf_spec <- rand_forest(mtry = tune(), trees = 500) %>%
+  set_engine("ranger", importance = "impurity") %>%
+  set_mode("classification")
+
+# Set up workflow with random forest model
+rf_wf <- workflow() %>%
+  add_recipe(rec) %>%
+  add_model(rf_spec)
+
+# Train random forest model
+rf_fit <- rf_wf %>% 
+  fit(cachexia_data)
+
+# Extract feature importance using vip
+importance <- rf_fit %>% 
+  extract_fit_parsnip() %>% 
+  vip(num_features = 20)
+
+# Print feature importance
+importance
+```
+
+
+```{r}
+rf_preds <- predict(rf_fit, cachexia_data) %>% 
+  bind_cols(predict(rf_fit, cachexia_data, type = "prob")) %>% 
+  bind_cols(
+    cachexia_data %>% 
+      select(`Muscle loss`)
+  )
+rf_preds
+```
+
+```{r}
+rf_preds %>% 
+  roc_curve(`Muscle loss`, .pred_cachexic) %>% 
+  autoplot()
+  
+```
+
+
+
