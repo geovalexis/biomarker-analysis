@@ -40,6 +40,9 @@ cachexia_data <- cachexia_data %>%
                  select(-`Patient ID`) %>% 
                  mutate(`Muscle loss`= factor(`Muscle loss`))
 
+# Set fixed seed to achieve reproducible results
+set.seed(448)
+
 # Split data into training and testing data
 splits      <- initial_split(cachexia_data, strata = `Muscle loss`)
 cachexia_train <- training(splits)
@@ -101,7 +104,6 @@ last_rf_wf <-
   update_model(last_rf_mod)
 
 # the last fit
-set.seed(345)
 last_rf_fit <- 
   last_rf_wf %>% 
   last_fit(splits)
@@ -143,9 +145,8 @@ We will use the feature importance obtained in the previous step to create vario
 For this, we will implement a helper function to ease this process:
 
 ```{r}
-compute_roc_curve <- function(data, class_feature, relevant_class, recipe_formula, training_proportion, seed=222) {
+compute_roc_curve <- function(data, class_feature, relevant_class, recipe_formula, training_proportion) {
   # Data splitting
-  set.seed(seed)
   splits      <- initial_split(data, strata = class_feature, prop = training_proportion)
   train_data <- training(splits)
   test_data  <- testing(splits)
@@ -240,7 +241,3 @@ bind_rows(results) %>%
   scale_color_viridis_d(option = "plasma", end = .6)
 
 ```
-
-
-\#TODO: create function that loop through feature importance list taking a subset of features each time.
-
