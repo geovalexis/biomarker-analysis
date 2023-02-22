@@ -117,8 +117,10 @@ last_rf_fit %>%
 # Save the values for later
 feature_importances <- last_rf_fit %>% 
   extract_fit_parsnip() %>% 
-  vi(num_features = 20)
+  vi()
+write_csv(feature_importances, "feature_importances.csv")
 ```
+
 
 ```{r}
 last_rf_fit %>% 
@@ -141,7 +143,7 @@ We will use the feature importance obtained in the previous step to create vario
 For this, we will implement a helper function to ease this process:
 
 ```{r}
-compute_roc_curve <- function(data, class_feature, relevant_class, recipe_formula, training_proportion, seed=222 ) {
+compute_roc_curve <- function(data, class_feature, relevant_class, recipe_formula, training_proportion, seed=222) {
   # Data splitting
   set.seed(seed)
   splits      <- initial_split(data, strata = class_feature, prop = training_proportion)
@@ -177,10 +179,11 @@ compute_roc_curve <- function(data, class_feature, relevant_class, recipe_formul
         select(class_feature)
     )
 
-  # Plot ROC curve
-  rf_preds %>% 
-    roc_curve({{class_feature}}, paste(".pred", relevant_class, sep="_")) %>% 
-    autoplot()
+  # Calculate ROC curve data
+  roc_curve_data <- rf_preds %>% 
+    roc_curve({{class_feature}}, paste(".pred", relevant_class, sep="_"))
+  
+  return(roc_curve_data)
 }
 ```
 
@@ -190,8 +193,54 @@ Test the function with a simple example:
 ```{r}
 selected_features <- c("Creatinine", "Succinate", "Tryptophan")
 recipe_formula <- formula(paste("`Muscle loss` ~ ", paste(selected_features, collapse = "+"), sep=""))
-compute_roc_curve(cachexia_data, 'Muscle loss', "cachexic", recipe_formula, 3/4)
+compute_roc_curve(cachexia_data, 'Muscle loss', "cachexic", recipe_formula, 3/4) %>% 
+  autoplot()
 ```
+
+
+Now we will loop through the ranking of feature importance taking a subset of them each time, as previously said.
+
+
+```{r}
+# Read list of feature importance (if neccesary)
+# feature_importances <- read_csv("feature_importances.csv")
+
+# Common data for this example
+data <- cachexia_data
+class_feature <- 'Muscle loss'
+relevant_class <- "cachexic"
+training_proportion <- 3/4
+
+# Create list to loop over
+total_features <- nrow(feature_importances)
+n_features_list <- c(3, 5, 10, round(1/5 * total_features), total_features)
+results = vector("list", length = length(n_features_list))
+
+# Compute roc curve data for each subset of features
+for (i in 1:length(n_features_list)){
+  n_features = n_features_list[[i]]
+  selected_features_joined <- feature_importances %>% 
+    top_n(n_features) %>% 
+    .$Variable %>% 
+    paste("`", ., "`", sep="", collapse="+")
+  recipe_formula <- paste('`', class_feature, "` ~ ", selected_features_joined, sep="")
+  print(paste("Computing ROC curve for the following formula: ", recipe_formula))
+  roc_curve_data <- compute_roc_curve(data, class_feature, relevant_class, formula(recipe_formula), training_proportion)
+  roc_curve_data <- roc_curve_data %>% 
+    mutate(Model=paste("Top ", n_features, "features"))
+  results[[i]] <- roc_curve_data
+}
+
+# Plot ROC curve for the different models
+bind_rows(results) %>% 
+  ggplot(aes(x = 1 - specificity, y = sensitivity, col = Model)) + 
+  geom_path(linewidth = 1.0, alpha = 0.8) +
+  geom_abline(lty = 3) + 
+  coord_equal() + 
+  scale_color_viridis_d(option = "plasma", end = .6)
+
+```
+
 
 \#TODO: create function that loop through feature importance list taking a subset of features each time.
 
