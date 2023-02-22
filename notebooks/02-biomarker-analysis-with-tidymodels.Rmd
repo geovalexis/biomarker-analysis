@@ -40,51 +40,158 @@ cachexia_data <- cachexia_data %>%
                  select(-`Patient ID`) %>% 
                  mutate(`Muscle loss`= factor(`Muscle loss`))
 
+# Split data into training and testing data
+splits      <- initial_split(cachexia_data, strata = `Muscle loss`)
+cachexia_train <- training(splits)
+cachexia_test  <- testing(splits)
+```
+
+
+## Setup model
+
+
+```{r}
 # Set up recipe
-rec <- recipe(`Muscle loss` ~ ., data = cachexia_data) %>%
+rec <- recipe(`Muscle loss` ~ ., data = cachexia_train) %>%
   step_center(all_predictors()) %>%
   step_scale(all_predictors())
 
-# Set up random forest model using parsnip
-rf_spec <- rand_forest(mtry = tune(), trees = 500) %>%
-  set_engine("ranger", importance = "impurity") %>%
+# Set up random forest model using parsnip. 
+# We use `tune()` function for the params `mtry` (number of predictors at each node) and `min_n` (minimum number of data points required to keep splitting)
+rf_spec <- rand_forest(mtry = tune(), min_n = tune(), trees = 500) %>%
+  set_engine("ranger", num.threads = parallel::detectCores()) %>%
   set_mode("classification")
 
+extract_parameter_set_dials(rf_spec)
+```
+
+## Tune hyperparameters
+
+```{r}
 # Set up workflow with random forest model
 rf_wf <- workflow() %>%
   add_recipe(rec) %>%
   add_model(rf_spec)
 
-# Train random forest model
-rf_fit <- rf_wf %>% 
-  fit(cachexia_data)
+# Space-filling design to tune, with 25 candidate models
+cachexia_train_rs <- bootstraps(cachexia_train, times = 30)
+rf_res <- 
+  rf_wf %>% 
+  tune_grid(cachexia_train_rs,
+            grid = 15,
+            control = control_grid(save_pred = TRUE),
+            metrics = metric_set(roc_auc))
 
-# Extract feature importance using vip
-importance <- rf_fit %>% 
+# Show top 5 models based on ROC AUC
+rf_res %>% 
+  show_best(metric = "roc_auc")
+```
+## Extract feature importances from best model
+
+```{r}
+# the last model
+last_rf_mod <- 
+  rand_forest(mtry = 5, min_n = 35, trees = 500) %>% 
+  set_engine("ranger", num.threads = parallel::detectCores(), importance = "impurity") %>% 
+  set_mode("classification")
+
+# the last workflow
+last_rf_wf <- 
+  rf_wf %>% 
+  update_model(last_rf_mod)
+
+# the last fit
+set.seed(345)
+last_rf_fit <- 
+  last_rf_wf %>% 
+  last_fit(splits)
+
+```
+
+```{r}
+# Bar plot with the feature importances
+last_rf_fit %>% 
   extract_fit_parsnip() %>% 
   vip(num_features = 20)
 
-# Print feature importance
-importance
-```
-
-
-```{r}
-rf_preds <- predict(rf_fit, cachexia_data) %>% 
-  bind_cols(predict(rf_fit, cachexia_data, type = "prob")) %>% 
-  bind_cols(
-    cachexia_data %>% 
-      select(`Muscle loss`)
-  )
-rf_preds
+# Save the values for later
+feature_importances <- last_rf_fit %>% 
+  extract_fit_parsnip() %>% 
+  vi(num_features = 20)
 ```
 
 ```{r}
-rf_preds %>% 
+last_rf_fit %>% 
+  collect_predictions() %>% 
   roc_curve(`Muscle loss`, .pred_cachexic) %>% 
   autoplot()
   
 ```
 
+## Compare ROC curves
 
+We will use the feature importance obtained in the previous step to create various models:
+
+* Model with top 3 features
+* Model with top 5 features
+* Model with top 10 features
+* Model with 3/5 the number of total features
+* Model with all the features
+
+For this, we will implement a helper function to ease this process:
+
+```{r}
+compute_roc_curve <- function(data, class_feature, relevant_class, recipe_formula, training_proportion, seed=222 ) {
+  # Data splitting
+  set.seed(seed)
+  splits      <- initial_split(data, strata = class_feature, prop = training_proportion)
+  train_data <- training(splits)
+  test_data  <- testing(splits)
+  
+  # Set up recipe
+  rec <- recipe(recipe_formula, data = train_data) %>%
+    step_center(all_predictors()) %>%
+    step_scale(all_predictors())
+
+  #TODO: tune hyperparameters and select best params
+  
+  rf_spec <-  rand_forest(min_n = 35, trees = 500) %>% 
+  # Set up random forest model
+    set_engine("ranger", num.threads = parallel::detectCores()) %>% 
+    set_mode("classification")
+
+  # Set up workflow with random forest model
+  rf_wf <- workflow() %>%
+    add_recipe(rec) %>%
+    add_model(rf_spec)
+
+  # Train random forest model
+  rf_fit <- rf_wf %>% 
+    fit(train_data)
+
+  # Predict
+  rf_preds <- predict(rf_fit, test_data) %>% 
+    bind_cols(predict(rf_fit, test_data, type = "prob")) %>% 
+    bind_cols(
+      test_data %>% 
+        select(class_feature)
+    )
+
+  # Plot ROC curve
+  rf_preds %>% 
+    roc_curve({{class_feature}}, paste(".pred", relevant_class, sep="_")) %>% 
+    autoplot()
+}
+```
+
+Test the function with a simple example:
+
+
+```{r}
+selected_features <- c("Creatinine", "Succinate", "Tryptophan")
+recipe_formula <- formula(paste("`Muscle loss` ~ ", paste(selected_features, collapse = "+"), sep=""))
+compute_roc_curve(cachexia_data, 'Muscle loss', "cachexic", recipe_formula, 3/4)
+```
+
+\#TODO: create function that loop through feature importance list taking a subset of features each time.
 
