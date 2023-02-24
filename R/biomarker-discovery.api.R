@@ -5,13 +5,39 @@ library(tidymodels)
 source("feature_importance.R")
 source("roc_curve.R")
 
+SEED = 123
+
 #* @apiTitle Biomarker discovery API
-#* @apiDescription
+#* @apiDescription Discovery biomarkers based on ROC AUC method
 
 #* Check if the API is up and running
 #* @get /is-alive
 function() {
   print("I am alive!")
+}
+
+#* Ranking of features importance based on ROC AUC
+#* @param data_url url of the data
+#* @param class_feature name of the target feature
+#* @param relevant_class relevant class within the target feature
+#* @param training_proportion proportion of the training set
+#* @serializer unboxedJSON
+#* @get /biomarker-discovery/features-importance
+function(data_url, class_feature, relevant_class, training_proportion="0.75") {
+  # Treat query params
+  training_proportion <- as.numeric(training_proportion)
+  
+  # Read data
+  data <- read_csv(data_url)
+
+  features_importance <- compute_features_importance(
+    data, 
+    class_feature, 
+    relevant_class, 
+    training_proportion, 
+    seed=SEED
+  )
+  return(feature_importances)
 }
 
 #* Multivariate ROC curve
@@ -30,6 +56,13 @@ function(data_url, class_feature, relevant_class, training_proportion="0.75") {
   data[[class_feature]] <- factor(data[[class_feature]])
 
   # Perform analysis
+  features_importance <- compute_features_importance(
+    data, 
+    class_feature, 
+    relevant_class, 
+    training_proportion, 
+    seed=SEED
+  )  
   n_features_list <- c(3, 5, 10, round(1/5 * total_features), total_features)
   results <- multivariate_roc_curve(
       data, 
@@ -38,7 +71,7 @@ function(data_url, class_feature, relevant_class, training_proportion="0.75") {
       relevant_class, 
       training_proportion, 
       features_importance, 
-      seed=123
+      seed=SEED
   )
   
   # Plot ROC curve for the different models
@@ -51,8 +84,6 @@ function(data_url, class_feature, relevant_class, training_proportion="0.75") {
   print(plot)
   
 }
-
-
 
 
 # Programmatically alter your API
