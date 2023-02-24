@@ -7,7 +7,7 @@ source("roc_curve.R")
 
 SEED = 123
 
-#* @apiTitle Biomarker discovery API
+#* @apiTitle Biomarker Discovery API
 #* @apiDescription Discovery biomarkers based on ROC AUC method
 
 #* Check if the API is up and running
@@ -17,19 +17,21 @@ function() {
 }
 
 #* Ranking of features importance based on ROC AUC
+#* @tag "Biomarker Discovery"
 #* @param data_url url of the data
 #* @param class_feature name of the target feature
 #* @param relevant_class relevant class within the target feature
 #* @param training_proportion proportion of the training set
 #* @serializer unboxedJSON
-#* @get /biomarker-discovery/features-importance
+#* @get /v1/biomarker-discovery/features-importance
 function(data_url, class_feature, relevant_class, training_proportion="0.75") {
   # Treat query params
   training_proportion <- as.numeric(training_proportion)
   
   # Read data
   data <- read_csv(data_url)
-
+  
+  # Perform analysis
   features_importance <- compute_features_importance(
     data, 
     class_feature, 
@@ -41,17 +43,18 @@ function(data_url, class_feature, relevant_class, training_proportion="0.75") {
 }
 
 #* Multivariate ROC curve
+#* @tag "Biomarker Discovery"
 #* @param data_url url of the data
 #* @param class_feature name of the target feature
 #* @param relevant_class relevant class within the target feature
 #* @param training_proportion proportion of the training set
 #* @serializer png
-#* @get /biomarker-discovery/roc-curve
+#* @get /v1/biomarker-discovery/roc-curve
 function(data_url, class_feature, relevant_class, training_proportion="0.75") {
   # Treat query params
   training_proportion <- as.numeric(training_proportion)
   
-  # Read data
+  # Read and treat data
   data <- read_csv(data_url)
   data[[class_feature]] <- factor(data[[class_feature]])
 
@@ -83,13 +86,4 @@ function(data_url, class_feature, relevant_class, training_proportion="0.75") {
     scale_color_viridis_d(option = "plasma", end = .6)
   print(plot)
   
-}
-
-
-# Programmatically alter your API
-#* @plumber
-function(pr) {
-  pr %>%
-    # Overwrite the default serializer to return unboxed JSON
-    pr_set_serializer(serializer_unboxed_json())
 }
