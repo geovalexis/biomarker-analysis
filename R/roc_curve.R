@@ -37,23 +37,22 @@ compute_roc_curve <- function(data, class_feature, relevant_class, recipe_formul
       test_data %>% 
         select(class_feature)
     )
-
+  
   # Calculate ROC curve data
   roc_curve_data <- rf_preds %>% 
-    roc_curve(".pred_class", paste(".pred", relevant_class, sep="_"))
-
+    roc_curve({{class_feature}}, paste(".pred", relevant_class, sep="_"))
+  
   return(roc_curve_data)
 }
 
-multivariate_roc_curve <- function(data, n_features_list, class_feature, relevant_class, training_proportion, seed) {
+multivariate_roc_curve <- function(data, n_features_list, class_feature, relevant_class, training_proportion, features_importance, seed) {
   # Create list to loop over
-  total_features <- nrow(feature_importances)
   results <- vector("list", length = length(n_features_list))
   
   # Compute roc curve data for each subset of features
   for (i in 1:length(n_features_list)){
     n_features = n_features_list[[i]]
-    selected_features_joined <- feature_importances %>% 
+    selected_features_joined <- features_importance %>% 
       top_n(n_features) %>% 
       .$Variable %>% 
       paste("`", ., "`", sep="", collapse="+")
