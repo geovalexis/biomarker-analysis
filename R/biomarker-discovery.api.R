@@ -15,21 +15,31 @@ function() {
 }
 
 #* Multivariate ROC curve
-#* @param data_url url for the CSV
+#* @param data_url url of the data
+#* @param class_feature name of the target feature
+#* @param relevant_class relevant class within the target feature
+#* @param training_proportion proportion of the training set
 #* @serializer png
 #* @get /biomarker-discovery/roc-curve
-function(data_url) {
-  class_feature <- "Muscle loss"
-  relevant_class <- "cachexic"
-  training_proportion <- 3/4
+function(data_url, class_feature, relevant_class, training_proportion="0.75") {
+  # Treat query params
+  training_proportion <- as.numeric(training_proportion)
   
   # Read data
   data <- read_csv(data_url)
-  data <- data %>% mutate(class_feature=factor(class_feature))
-  
+  data[[class_feature]] <- factor(data[[class_feature]])
+
   # Perform analysis
   n_features_list <- c(3, 5, 10, round(1/5 * total_features), total_features)
-  results <- multivariate_roc_curve(data, n_features_list, class_feature, relevant_class, training_proportion, seed=123)
+  results <- multivariate_roc_curve(
+      data, 
+      n_features_list, 
+      class_feature, 
+      relevant_class, 
+      training_proportion, 
+      features_importance, 
+      seed=123
+  )
   
   # Plot ROC curve for the different models
   plot <- bind_rows(results) %>% 
