@@ -10,7 +10,7 @@ For a more detailed description of the analysis, please refer to the [original p
 ## Description
 
 Metabolites can provide valuable insights into the underlying processes and pathways of the body, and
-changes in their level. . As such, one common goal of metabolomic studies is biomarker discovery, aiming to identify a metabolite or a set of metabolites capable of classifying conditions or disease, with high sensitivity (true-positive rate) and specificity (true negative rate).
+changes in their level. As such, one common goal of metabolomic studies is biomarker discovery, aiming to identify a metabolite or a set of metabolites capable of classifying conditions or disease, with high sensitivity (true-positive rate) and specificity (true negative rate).
 
 The MetaboAnalystR package provides a set of functions to perform a ROC AUC based analysis
 to identify metabolites that can be used as biomarkers for a given dataset. An example of a biomarker discovery
@@ -18,7 +18,7 @@ analysis can be found [here](https://rdrr.io/github/simscr/metaboanalyst/f/vigne
 
 In this work, we have reproduced this same analysis with MetaboAnalystR using the Tidymodels framework. The notebooks with the analysis can be found in the `notebooks` folder or also the rendered version an be found:
 
-- [Biomarker Discovery with MetaboAnalysR](https://geovalexis.github.io/biomarker-analysis/notebooks/01-biomarker-analysis-with-metaboanalyst.html)
+- [Biomarker Discovery with MetaboAnalystR](https://geovalexis.github.io/biomarker-analysis/notebooks/01-biomarker-analysis-with-metaboanalyst.html)
 - [Biomarker Discovery with Tidymodels](https://geovalexis.github.io/biomarker-analysis/notebooks/02-biomarker-analysis-with-tidymodels.html)
 
 ## Requirements
